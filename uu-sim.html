@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>豪侠录 · 武林文字模拟器</title>
+<style>
+:root{
+  --bg:#F2EDE3;--card:#FFFCF6;--ink:#2B2318;--ink2:#6B5C48;
+  --red:#C23B22;--red2:#9A2E1A;--gold:#B08D3E;--green:#3F5D4A;
+  --line:#D4C6AE;--nav:#1E1812;--navText:#C9B89A;--navOn:#E8C46A;
+  --serif:"Noto Serif SC","Songti SC","SimSun",serif;
+  --kai:"Kaiti SC","STKaiti","KaiTi","Noto Serif SC",serif;
+  --mono:"JetBrains Mono","Consolas",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:var(--serif);color:var(--ink);background:#1A1612;font-size:15px;line-height:1.75}
+#app{max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.45)}
+.topbar{padding:10px 14px 8px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,#F7F1E6,rgba(247,241,230,0));position:sticky;top:0;z-index:20;flex-shrink:0}
+.topbar .brand{font-family:var(--kai);font-size:18px;letter-spacing:.18em;color:var(--ink)}
+.topbar .coin{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:12px;background:rgba(176,141,62,.14);border:1px solid rgba(176,141,62,.35);padding:3px 9px;border-radius:999px;color:var(--gold)}
+.screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding:0 0 76px;-webkit-overflow-scrolling:touch}
+.screen.active{display:block}
+.pad{padding:8px 14px 20px}
+.hero{margin:4px 14px 12px;border-radius:12px;padding:18px 16px 16px;background:linear-gradient(135deg,#2A2218 0%,#4A3424 55%,#7A3E28 100%);color:#F3E8D4;position:relative;overflow:hidden}
+.hero::after{content:"豪";position:absolute;right:-8px;top:-18px;font-family:var(--kai);font-size:120px;opacity:.12;color:#E8C46A;transform:rotate(-12deg);pointer-events:none}
+.hero h2{font-family:var(--kai);font-size:22px;letter-spacing:.14em;margin-bottom:6px}
+.hero p{font-size:12px;opacity:.82;line-height:1.7;max-width:88%}
+.hero .cta{margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;border:none;padding:9px 18px;border-radius:999px;font-family:var(--kai);font-size:14px;letter-spacing:.12em;cursor:pointer}
+.search{margin:0 14px 12px;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.search input{border:none;outline:none;flex:1;font-family:var(--serif);font-size:14px;background:transparent;color:var(--ink)}
+.search .ic{opacity:.5;font-size:14px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 14px 12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-family:var(--kai);font-size:13px;letter-spacing:.08em;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--red);border-color:var(--red);color:#fff}
+.sec{display:flex;align-items:baseline;justify-content:space-between;padding:6px 14px 8px}
+.sec h3{font-family:var(--kai);font-size:16px;letter-spacing:.16em;color:var(--ink)}
+.sec a{font-size:11px;color:var(--gold);text-decoration:none;letter-spacing:.08em}
+.cards{display:flex;flex-direction:column;gap:10px;padding:0 14px 12px}
+.card{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;transition:transform .12s}
+.card:active{transform:scale(.98)}
+.card .cover{width:64px;height:84px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--kai);font-size:22px;color:#F3E8D4;letter-spacing:.1em}
+.card .meta{flex:1;min-width:0}
+.card .meta h4{font-family:var(--kai);font-size:15px;letter-spacing:.08em;margin-bottom:3px;color:var(--ink)}
+.card .meta .tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px}
+.card .meta .tag{font-size:10px;padding:1px 6px;border-radius:3px;background:rgba(194,59,34,.1);color:var(--red);border:1px solid rgba(194,59,34,.2)}
+.card .meta .tag.g{background:rgba(63,93,74,.1);color:var(--green);border-color:rgba(63,93,74,.2)}
+.card .meta .desc{font-size:11px;color:var(--ink2);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .meta .foot{margin-top:5px;font-family:var(--mono);font-size:10px;color:var(--gold)}
+.detail-hero{height:180px;margin:0 0 0;position:relative;display:flex;align-items:flex-end;padding:16px;color:#F3E8D4}
+.detail-hero h2{font-family:var(--kai);font-size:26px;letter-spacing:.16em;position:relative;z-index:1}
+.detail-hero .bgtext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--kai);font-size:90px;opacity:.15;transform:rotate(-8deg)}
+.detail-body{padding:16px 14px 20px}
+.detail-body .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.detail-body .tag{font-size:11px;padding:3px 10px;border-radius:999px;background:rgba(194,59,34,.1);color:var(--red);border:1px solid rgba(194,59,34,.22)}
+.detail-body .intro{font-size:13px;color:var(--ink2);line-height:1.9;margin-bottom:14px}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.stat-row .s{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 6px;text-align:center}
+.stat-row .s .k{font-size:10px;color:var(--ink2);letter-spacing:.12em;font-family:var(--kai)}
+.stat-row .s .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);margin-top:2px}
+.btn-main{width:100%;padding:14px;border:none;border-radius:10px;background:var(--red);color:#fff;font-family:var(--kai);font-size:17px;letter-spacing:.2em;cursor:pointer}
+.btn-main:active{background:var(--red2)}
+.btn-ghost{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-family:var(--kai);font-size:15px;letter-spacing:.14em;cursor:pointer;margin-top:10px}
+.form-card{margin:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.form-card h3{font-family:var(--kai);font-size:16px;letter-spacing:.16em;margin-bottom:12px}
+.field{margin-bottom:14px}
+.field label{display:block;font-family:var(--kai);font-size:12px;letter-spacing:.14em;color:var(--ink2);margin-bottom:6px}
+.field input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-family:var(--kai);font-size:16px;letter-spacing:.1em;background:#FFFDF8;color:var(--ink);outline:none}
+.field input:focus{border-color:var(--red)}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:72px;padding:10px 8px;border-radius:8px;border:1px solid var(--line);background:#FFFDF8;font-family:var(--kai);font-size:13px;letter-spacing:.1em;color:var(--ink2);cursor:pointer}
+.seg button.on{background:rgba(194,59,34,.1);border-color:var(--red);color:var(--red)}
+.game-wrap{display:flex;flex-direction:column;height:100%}
+.game-top{padding:10px 12px;background:rgba(30,24,18,.96);color:#E8DCC8;flex-shrink:0}
+.game-top .row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.game-top .name{font-family:var(--kai);font-size:15px;letter-spacing:.12em}
+.game-top .name span{color:var(--navOn);font-size:11px;margin-left:6px}
+.game-top .mode{font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid rgba(232,196,106,.4);color:var(--navOn);cursor:pointer;font-family:var(--kai);letter-spacing:.1em}
+.bars{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.bar-item .lbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;opacity:.85;margin-bottom:3px}
+.bar-item .track{height:5px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
+.bar-item .fill{height:100%;border-radius:3px;transition:width .4s}
+.fill-hp{background:#C23B22}.fill-mp{background:#4A9B7A}.fill-hao{background:#E8C46A}
+.story{flex:1;overflow-y:auto;padding:14px 14px 8px;background:linear-gradient(180deg,#F2EDE3,#EAE2D2)}
+.msg{margin-bottom:12px;animation:fade .3s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg .bubble{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.9;color:var(--ink)}
+.msg .bubble .d{color:#8B7355;font-family:var(--mono);font-size:11px;margin-bottom:6px;letter-spacing:.04em}
+.msg .bubble .sys{display:inline-block;background:rgba(63,93,74,.1);color:var(--green);font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:3px;margin:2px 0}
+.msg .bubble .hao{color:var(--red);font-family:var(--kai)}
+.msg.me .bubble{background:rgba(194,59,34,.1);border-color:rgba(194,59,34,.22);margin-left:40px}
+.msg.me .bubble .d{color:var(--red)}
+.quick{display:flex;flex-wrap:wrap;gap:8px;padding:6px 14px 10px}
+.quick button{padding:9px 12px;border-radius:999px;border:1px solid rgba(194,59,34,.35);background:rgba(194,59,34,.08);color:var(--red);font-family:var(--kai);font-size:12px;letter-spacing:.08em;cursor:pointer}
+.quick button.hao{border-color:var(--gold);background:rgba(176,141,62,.12);color:var(--gold)}
+.quick button:disabled{opacity:.4}
+.inputbar{display:flex;gap:8px;padding:8px 12px 12px;background:var(--bg);border-top:1px solid var(--line);flex-shrink:0}
+.inputbar input{flex:1;padding:11px 12px;border:1px solid var(--line);border-radius:999px;font-family:var(--serif);font-size:14px;background:var(--card);outline:none;color:var(--ink)}
+.inputbar input:focus{border-color:var(--red)}
+.inputbar button{width:64px;border:none;border-radius:999px;background:var(--red);color:#fff;font-family:var(--kai);font-size:14px;letter-spacing:.1em;cursor:pointer}
+.create-hero{margin:12px 14px;padding:20px 16px;border-radius:12px;background:linear-gradient(135deg,#3F5D4A,#2A2218);color:#E8DCC8}
+.create-hero h2{font-family:var(--kai);font-size:20px;letter-spacing:.16em;margin-bottom:6px}
+.create-hero p{font-size:12px;opacity:.8;line-height:1.7}
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 16px}
+.tpl{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 12px;cursor:pointer}
+.tpl .icon{font-size:22px;margin-bottom:6px}
+.tpl h4{font-family:var(--kai);font-size:14px;letter-spacing:.1em;margin-bottom:4px}
+.tpl p{font-size:11px;color:var(--ink2);line-height:1.5}
+.me-card{margin:12px 14px;padding:18px 16px;border-radius:12px;background:linear-gradient(135deg,#2A2218,#5A3E2A);color:#F3E8D4}
+.me-card .av{width:52px;height:52px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:var(--kai);font-size:22px;color:#2A2218;margin-bottom:10px}
+.me-card h3{font-family:var(--kai);font-size:18px;letter-spacing:.12em}
+.me-card p{font-size:11px;opacity:.75;margin-top:3px}
+.me-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.me-stats .ms{text-align:center;background:rgba(255,255,255,.08);border-radius:8px;padding:10px 4px}
+.me-stats .ms .v{font-family:var(--mono);font-size:18px;font-weight:700}
+.me-stats .ms .k{font-size:10px;opacity:.7;letter-spacing:.1em;font-family:var(--kai)}
+.menu-list{margin:0 14px 20px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.menu-item{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer;font-family:var(--kai);letter-spacing:.1em}
+.menu-item:last-child{border-bottom:none}
+.menu-item .r{color:var(--ink2);font-family:var(--mono);font-size:11px}
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:62px;background:var(--nav);display:flex;z-index:30;border-top:1px solid rgba(255,255,255,.06)}
+.tabbar button{flex:1;background:none;border:none;color:var(--navText);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:var(--kai);font-size:10px;letter-spacing:.12em;cursor:pointer}
+.tabbar button.on{color:var(--navOn)}
+.tabbar button .ic{font-size:18px;line-height:1}
+#toast{position:absolute;left:50%;bottom:80px;transform:translateX(-50%) translateY(12px);background:rgba(30,24,18,.92);color:#F3E8D4;padding:9px 16px;border-radius:999px;font-family:var(--kai);font-size:12px;letter-spacing:.1em;opacity:0;pointer-events:none;transition:.25s;z-index:50;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar" id="topbar">
+    <div class="brand">豪侠录</div>
+    <div class="coin" id="coin-box">◈ <span id="coin-val">128</span> 豪侠币</div>
+  </div>
+  <section class="screen active" id="s-home">
+    <div class="hero">
+      <h2>豪气冲天 · 武林高手</h2>
+      <p>大口喝酒，拔剑就干。AI 动态叙事，你的每个决定都改写江湖。</p>
+      <button class="cta" onclick="go('s-scripts')">逛剧本库 →</button>
+    </div>
+    <div class="search"><span class="ic">⌕</span><input id="search-input" placeholder="搜索剧本 / 题材 / 关键词" /></div>
+    <div class="chips" id="cat-chips">
+      <div class="chip on" data-cat="全部">全部</div><div class="chip" data-cat="江湖">江湖</div><div class="chip" data-cat="修仙">修仙</div><div class="chip" data-cat="豪侠">豪侠</div><div class="chip" data-cat="同人">同人</div><div class="chip" data-cat="高自由">高自由</div>
+    </div>
+    <div class="sec"><h3>热门剧本</h3><a onclick="go('s-scripts')">全部 ›</a></div>
+    <div class="cards" id="home-cards"></div>
+    <div class="sec"><h3>新手推荐</h3></div>
+    <div class="cards" id="home-cards2"></div>
+  </section>
+  <section class="screen" id="s-scripts">
+    <div class="pad"><div class="sec" style="padding-left:0;padding-right:0"><h3>剧本库</h3><span style="font-size:11px;color:var(--ink2)" id="script-count"></span></div></div>
+    <div class="chips" id="cat-chips2">
+      <div class="chip on" data-cat="全部">全部</div><div class="chip" data-cat="江湖">江湖</div><div class="chip" data-cat="修仙">修仙</div><div class="chip" data-cat="豪侠">豪侠</div><div class="chip" data-cat="同人">同人</div><div class="chip" data-cat="高自由">高自由</div>
+    </div>
+    <div class="cards" id="all-cards"></div>
+  </section>
+  <section class="screen" id="s-detail">
+    <div class="detail-hero" id="detail-hero"><div class="bgtext" id="detail-bgchar">侠</div><h2 id="detail-title">剧本</h2></div>
+    <div class="detail-body">
+      <div class="tags" id="detail-tags"></div>
+      <div class="intro" id="detail-intro"></div>
+      <div class="stat-row">
+        <div class="s"><div class="k">游玩人次</div><div class="v" id="d-plays">0</div></div>
+        <div class="s"><div class="k">好评率</div><div class="v" id="d-rate">0%</div></div>
+        <div class="s"><div class="k">章节</div><div class="v" id="d-ch">0</div></div>
+      </div>
+      <button class="btn-main" onclick="startFromDetail()">开 始 游 玩</button>
+      <button class="btn-ghost" onclick="startFromDetail(true)">小说模式 · 纯阅读</button>
+    </div>
+  </section>
+  <section class="screen" id="s-char">
+    <div class="form-card">
+      <h3>创建角色</h3>
+      <div class="field"><label>角色名号</label><input type="text" id="char-name" maxlength="10" placeholder="例如：叶孤鸿" /></div>
+      <div class="field"><label>性别</label><div class="seg" id="seg-gender"><button class="on" data-v="男">男</button><button data-v="女">女</button><button data-v="不限">不限</button></div></div>
+      <div class="field"><label>出身 / 流派</label><div class="seg" id="seg-school"><button class="on" data-v="剑修">剑修</button><button data-v="刀客">刀客</button><button data-v="拳师">拳师</button><button data-v="暗器">暗器</button><button data-v="内功">内功</button></div></div>
+      <div class="field"><label>性格倾向</label><div class="seg" id="seg-personality"><button class="on" data-v="豪迈">豪迈</button><button data-v="沉稳">沉稳</button><button data-v="机变">机变</button><button data-v="狂放">狂放</button></div></div>
+      <button class="btn-main" onclick="beginAdventure()">开 始 冒 险</button>
+      <button class="btn-ghost" onclick="go('s-detail')">返 回</button>
+    </div>
+  </section>
+  <section class="screen" id="s-game" style="padding-bottom:0">
+    <div class="game-wrap">
+      <div class="game-top">
+        <div class="row1"><div class="name" id="g-name">无名<span id="g-title">初出茅庐</span></div><div class="mode" id="g-mode" onclick="toggleMode()">游戏模式</div></div>
+        <div class="bars">
+          <div class="bar-item"><div class="lbl"><span>气血</span><span id="g-hp-t">100</span></div><div class="track"><div class="fill fill-hp" id="g-hp" style="width:100%"></div></div></div>
+          <div class="bar-item"><div class="lbl"><span>内力</span><span id="g-mp-t">50</span></div><div class="track"><div class="fill fill-mp" id="g-mp" style="width:100%"></div></div></div>
+          <div class="bar-item"><div class="lbl"><span>豪气</span><span id="g-hao-t">10</span></div><div class="track"><div class="fill fill-hao" id="g-hao" style="width:10%"></div></div></div>
+        </div>
+      </div>
+      <div class="story" id="story"></div>
+      <div class="quick" id="quick"></div>
+      <div class="inputbar" id="inputbar"><input id="free-input" placeholder="输入你的行动……（回车提交）" /><button onclick="submitFree()">继续</button></div>
+    </div>
+  </section>
+  <section class="screen" id="s-create">
+    <div class="create-hero"><h2>创作中心</h2><p>零门槛写剧本 · 自定义角色卡 · 改写江湖走向。产出优质作品可获豪侠币分成。</p></div>
+    <div class="sec"><h3>创作模板</h3></div>
+    <div class="tpl-grid">
+      <div class="tpl" onclick="toast('模板编辑器开发中')"><div class="icon">⚔️</div><h4>江湖历险</h4><p>门派、仇杀、名剑、武林大会</p></div>
+      <div class="tpl" onclick="toast('模板编辑器开发中')"><div class="icon">🏔️</div><h4>修仙问道</h4><p>灵根、功法、突破、渡劫</p></div>
+      <div class="tpl" onclick="toast('模板编辑器开发中')"><div class="icon">📖</div><h4>同人二创</h4><p>基于你喜欢的世界观再创作</p></div>
+      <div class="tpl" onclick="toast('模板编辑器开发中')"><div class="icon">🎲</div><h4>高自由</h4><p>沙盒式人生模拟，随心所欲</p></div>
+    </div>
+  </section>
+  <section class="screen" id="s-me">
+    <div class="me-card">
+      <div class="av" id="me-av">侠</div><h3 id="me-name">游客侠士</h3><p>江湖夜雨十年灯 · 注册即送 128 豪侠币</p>
+      <div class="me-stats">
+        <div class="ms"><div class="v" id="me-plays">0</div><div class="k">游玩次数</div></div>
+        <div class="ms"><div class="v" id="me-endings">0</div><div class="k">解锁结局</div></div>
+        <div class="ms"><div class="v" id="me-coin">128</div><div class="k">豪侠币</div></div>
+      </div>
+    </div>
+    <div class="menu-list">
+      <div class="menu-item" onclick="toast('登录功能演示版未开放')">登录 / 注册 <span class="r">手机号 · 邮箱 ›</span></div>
+      <div class="menu-item" onclick="toast('豪侠币可用于解锁番外与皮肤')">豪侠币充值 <span class="r">◈ 充值购买 ›</span></div>
+      <div class="menu-item" onclick="go('s-scripts')">我的收藏 <span class="r" id="me-fav">0 部 ›</span></div>
+      <div class="menu-item" onclick="toast('进度已保存在本机')">存档管理 <span class="r">自动保存 ›</span></div>
+      <div class="menu-item" onclick="toast('豪侠录 · 文字模拟器 v2.0')">关于 <span class="r">v2.0 ›</span></div>
+    </div>
+  </section>
+  <nav class="tabbar" id="tabbar">
+    <button class="on" data-s="s-home"><span class="ic">⌂</span>首页</button>
+    <button data-s="s-scripts"><span class="ic">▤</span>剧本</button>
+    <button data-s="s-create"><span class="ic">✎</span>创作</button>
+    <button data-s="s-me"><span class="ic">☺</span>我的</button>
+  </nav>
+  <div id="toast"></div>
+</div>
+<script>
+/* DATA loaded from compact CDN-style inline - full game engine */
+const SCRIPTS=[
+ {id:"haoxia",title:"豪气冲天",cats:["江湖","豪侠"],bg:"linear-gradient(135deg,#7A2E1A,#2A2218)",char:"豪",intro:"大口喝酒，拔剑就干。你是一名初出茅庐的武林高手，在腥风血雨的江湖中结交兄弟、力挫强敌、名震天下。",plays:"12.8万",rate:"98%",chapters:"5章·多结局"},
+ {id:"jianxin",title:"剑心通明",cats:["江湖","高自由"],bg:"linear-gradient(135deg,#2A3A4A,#2A2218)",char:"剑",intro:"你修的是剑，问的是心。从无名剑童到一代剑圣，江湖路远，唯有剑心通明者可至巅峰。",plays:"8.2万",rate:"96%",chapters:"6章"},
+ {id:"jiuquan",title:"酒泉刀歌",cats:["豪侠","同人"],bg:"linear-gradient(135deg,#5A3E1A,#2A2218)",char:"酒",intro:"酒是粮食精，刀是英雄胆。你带着一把缺了口的刀和半壶浊酒，走遍天下不平路。",plays:"6.5万",rate:"95%",chapters:"4章"},
+ {id:"heihei",title:"黑风寨往事",cats:["江湖"],bg:"linear-gradient(135deg,#3A2A2A,#1A1210)",char:"寨",intro:"你是黑风寨的三当家。官府围剿在即，兄弟内讧在侧，寨主之位空悬——这盘棋，你怎么下？",plays:"5.1万",rate:"93%",chapters:"5章"},
+ {id:"xianxia",title:"一剑开天",cats:["修仙","高自由"],bg:"linear-gradient(135deg,#2A4A3A,#1A2A22)",char:"仙",intro:"灵根觉醒，踏上仙途。剑修、丹修、符修任你选择。一剑可开天，一念可入魔。",plays:"15.3万",rate:"97%",chapters:"8章"},
+ {id:"tongren",title:"武林外传·同人",cats:["同人","豪侠"],bg:"linear-gradient(135deg,#4A3A2A,#2A2218)",char:"传",intro:"如果那家客栈里多了一个你——一个带着现代记忆的武林高手。同福客栈的日常，因你而变。",plays:"9.7万",rate:"94%",chapters:"7章"}
+];
+const STORY_WUXIA={
+ start:{text:()=>`<div class="d">第一章 · 初入江湖</div><p>黄沙古道，风卷残云。</p><p>你，<b>${G.name}</b>，背着一把旧剑，第一次踏入真正的江湖。</p><p>师父临行只说了一句：<span class="hao">「江湖不是打打杀杀，是人情世故——但真要拔剑的时候，别怂。」</span></p><p>前方岔路：左边是热闹的<span class="sys">青石镇</span>，右边是荒凉的<span class="sys">断魂坡</span>。</p>`,choices:[{t:"进青石镇，先找口酒喝",d:"酒馆消息最灵通",next:"town",eff:s=>{s.gold=(s.gold||20)-2;return"花了二两酒钱。<span class='sys'>银两-2</span>"}},{t:"走断魂坡，抄近路闯一闯",d:"荒郊或有奇遇",hao:1,next:"slope",eff:s=>{s.hao+=8;return"<span class='hao'>好胆！</span><span class='sys'>豪气+8</span>"}},{t:"原地打坐，稳固内力",d:"磨刀不误砍柴工",next:"meditate",eff:s=>{s.mp=Math.min(s.mpMax,s.mp+15);return"内息渐稳。<span class='sys'>内力+15</span>"}}]},
+ town:{text:()=>`<div class="d">青石镇 · 酒馆</div><p>酒旗招展，人声鼎沸。你刚坐下，邻桌几个汉子拍桌子：</p><p class="hao">「黑风寨那帮杀才又下山了！昨儿劫了李家的镖！」</p><p>掌柜压低声音：「客官外乡人吧？今晚别走夜路。」</p>`,choices:[{t:"拍案而起：「黑风寨在哪？」",d:"豪气干云，满堂皆惊",hao:1,next:"bold",eff:s=>{s.hao+=12;s.fame+=5;return"<span class='hao'>满堂喝彩！</span><span class='sys'>豪气+12·声望+5</span>"}},{t:"不动声色，暗中打听",d:"知己知彼",next:"spy",eff:s=>{s.wit=(s.wit||5)+2;return"摸清了黑风寨底细。<span class='sys'>悟性+2</span>"}},{t:"帮邻桌付酒钱，交个朋友",d:"朋友比银子值钱",next:"friend",eff:s=>{s.gold-=5;s.fame+=3;return"请了一桌酒。<span class='sys'>银两-5·声望+3</span>"}}]},
+ bold:{text:()=>`<div class="d">满堂皆惊</div><p>你一句话，整个酒馆安静了三息，然后爆发出哄笑与敬意。</p><p class="hao">「好小子！有种！」</p><p>掌柜塞来纸条：<span class="sys">黑风寨在镇北三十里，寨主铁臂罗汉。</span></p>`,choices:[{t:"趁夜直奔黑风寨",d:"说干就干",hao:1,next:"temple",eff:s=>{s.hao+=6;return"<span class='hao'>说走就走。</span><span class='sys'>豪气+6</span>"}},{t:"养精蓄锐，明日再战",d:"好汉不吃眼前亏",next:"temple",eff:s=>{s.hp=Math.min(s.hpMax,s.hp+20);s.mp=Math.min(s.mpMax,s.mp+10);return"美美睡了一觉。<span class='sys'>气血+20·内力+10</span>"}}]},
+ spy:{text:()=>`<div class="d">暗流</div><p>你摸清：寨主铁臂罗汉一身横练功夫。三日后，他们要对<span class="sys">柳家庄</span>下手。</p>`,choices:[{t:"路见不平，拔刀相助",d:"侠义当先",hao:1,next:"temple",eff:s=>{s.hao+=10;s.fame+=8;return"<span class='hao'>侠之大者。</span><span class='sys'>豪气+10·声望+8</span>"}},{t:"先去柳家庄报信",d:"谋定而后动",next:"temple",eff:s=>{s.wit+=2;s.fame+=4;return"决定先报信。<span class='sys'>悟性+2·声望+4</span>"}}]},
+ friend:{text:()=>`<div class="d">酒中知己</div><p>赵大刀拍胸脯：<span class="hao">「兄弟你敞亮！以后有事招呼一声！」</span></p>`,choices:[{t:"收下好意，继续赶路",d:"后会有期",next:"temple",eff:s=>{s.gold+=10;s.hp=Math.min(s.hpMax,s.hp+15);return"收下伤药银两。<span class='sys'>银两+10·气血+15</span>"}},{t:"邀他们同行，共闯黑风寨",d:"人多力量大",next:"temple",eff:s=>{s.atk+=2;return"赵大刀答应助阵。<span class='sys'>武功+2</span>"}}]},
+ slope:{text:()=>`<div class="d">断魂坡</div><p>白衣女子被三个黑衣人围攻，剑光已乱。</p><p class="hao">「把东西交出来，饶你不死！」</p>`,choices:[{t:"大喝一声，拔剑就上",d:"路见不平一声吼",hao:1,next:"rescue",eff:s=>{s.hao+=10;return"<span class='hao'>拔刀相助！</span><span class='sys'>豪气+10</span>"}},{t:"暗处看清形势再动手",d:"不打无准备之仗",next:"rescue",eff:s=>{s.wit+=2;s.flags=s.flags||{};s.flags.ambush=1;return"发现敌人破绽。<span class='sys'>悟性+2</span>"}}]},
+ rescue:{text:s=>`<div class="d">拔剑</div><p>${s.flags&&s.flags.ambush?"你看准时机，从背后暴起发难！":"你剑光一闪，直取为首黑衣人！"}</p><p class="sys">进入战斗</p>`,combat:{name:"黑衣人头目",hp:42,atk:10,def:2},onWin:{text:()=>`<p>白衣女子收剑一礼：<span class="hao">「多谢少侠。小女子姓柳，单名一个烟字。」</span></p>`,choices:[{t:"「举手之劳，姑娘不必挂怀。」",d:"谦逊有礼",next:"temple",eff:s=>{s.fame+=5;return"柳烟记住了你。<span class='sys'>声望+5</span>"}},{t:"「姑娘剑法不错，可惜心太软。」",d:"直来直去",hao:1,next:"temple",eff:s=>{s.hao+=5;s.atk+=1;return"柳烟与你拆解几招。<span class='sys'>豪气+5·武功+1</span>"}}]},onLose:{text:()=>`<p>你力竭倒地。柳烟留下一句：<span class="hao">「后会有期。」</span></p>`,choices:[{t:"养好伤，再入江湖",d:"来日方长",next:"temple",eff:s=>{s.hp=Math.floor(s.hpMax*0.7);return"伤势好转。<span class='sys'>气血恢复70%</span>"}}]}},
+ meditate:{text:()=>`<div class="d">静心</div><p>一骑快马绝尘而来：<span class="hao">「黑风寨下山了！谁来救救柳家庄！」</span></p>`,choices:[{t:"飞身拦马：「我去！」",d:"该出手时就出手",hao:1,next:"temple",eff:s=>{s.hao+=10;s.fame+=5;return"<span class='hao'>侠义心肠。</span><span class='sys'>豪气+10·声望+5</span>"}},{t:"问明情况再定夺",d:"先把事情弄清楚",next:"temple",eff:s=>{s.wit+=2;return"了解了柳家庄危局。<span class='sys'>悟性+2</span>"}}]},
+ temple:{text:()=>`<div class="d">第二章 · 山神庙</div><p>十几人围着负伤白发老者。<span class="hao">「柳老头！交出剑谱，给你个痛快！」</span></p>`,combat:{name:"独眼刀客",hp:58,atk:13,def:3},onWin:{text:()=>`<p>柳剑声递来泛黄册子：<span class="hao">「这是《惊鸿剑诀》。你……可愿学？」</span></p>`,choices:[{t:"「前辈绝学，晚辈却之不恭！」",d:"继承绝学",next:"huashan",eff:s=>{s.atk+=8;s.mpMax+=20;s.mp=s.mpMax;s.fame+=15;return"<span class='hao'>习得《惊鸿剑诀》！</span><span class='sys'>武功+8·内力上限+20·声望+15</span>"}},{t:"「剑谱是柳家的，晚辈不敢受。」",d:"高风亮节",hao:1,next:"huashan",eff:s=>{s.hao+=15;s.fame+=25;return"<span class='hao'>柳剑声肃然起敬！</span><span class='sys'>豪气+15·声望+25</span>"}}]},onLose:{text:()=>`<p>柳烟的剑如惊鸿掠过，救你脱险。</p>`,choices:[{t:"「此仇，我记下了。」",d:"知耻而后勇",hao:1,next:"huashan",eff:s=>{s.hao+=10;s.hp=Math.floor(s.hpMax*0.5);return"你立下誓言。<span class='sys'>豪气+10</span>"}}]}},
+ huashan:{text:()=>`<div class="d">第三章 · 武林大会</div><p>烫金请柬：<span class="hao">「中秋月圆，华山之巅，武林大会。」</span>更有<span class="sys">「豪气冲天剑」</span>现世。</p>`,choices:[{t:"「这剑，我要了！」",d:"当仁不让",hao:1,next:"arena",eff:s=>{s.hao+=15;return"<span class='hao'>语惊四座！</span><span class='sys'>豪气+15</span>"}},{t:"静观其变，后发制人",d:"看清形势",next:"arena",eff:s=>{s.wit+=3;return"观察各方势力。<span class='sys'>悟性+3</span>"}},{t:"「剑是死的，人才是活的。」",d:"超然物外",hao:1,next:"ending_free",eff:s=>{s.hao+=20;s.fame+=15;return"<span class='hao'>满座肃然。</span><span class='sys'>豪气+20·声望+15</span>"}}]},
+ arena:{text:()=>`<div class="d">华山论剑</div><p>对面站着苦修三月的<span class="hao">雷啸天</span>。<span class="hao">「上次的账，今日一并算了。」</span></p>`,combat:{name:"雷啸天（完全体）",hp:115,atk:20,def:5},onWin:{text:()=>`<p>白无涯亲手捧剑：<span class="hao">「此剑，配得上你。」</span></p>`,choices:[{t:"接剑，成为新的武林盟主",d:"名震天下",next:"ending_leader",eff:s=>{s.fame+=40;s.hao+=10;return"<span class='hao'>你成了武林盟主！</span>"}},{t:"「剑留下，我走。江湖再见。」",d:"潇洒离去",hao:1,next:"ending_free",eff:s=>{s.hao+=25;return"<span class='hao'>飘然而去，留下传说。</span>"}}]},onLose:{text:()=>`<p>雷啸天收剑：<span class="hao">「你若再练三年，我不如你。」</span></p>`,choices:[{t:"「三年后，我再来找你。」",d:"胜负乃兵家常事",hao:1,next:"ending_seeker",eff:s=>{s.hao+=12;return"<span class='hao'>此心不死，江湖不散。</span>"}}]}}
+};
+const ENDINGS={
+ ending_leader:{title:"武林盟主",epithet:"号令天下，莫敢不从",text:"你站在华山之巅，俯瞰云海。手中是豪气冲天剑。\n\n从此，武林因你而正，江湖因你而安。\n\n而你只是笑笑，饮尽碗中酒。"},
+ ending_free:{title:"潇洒豪侠",epithet:"十步杀一人，千里不留行",text:"你没有接那柄剑。你把名号留在了华山之巅，把身影留在了江湖传说里。\n\n江湖很大，大到装得下你的豪气。"},
+ ending_seeker:{title:"求道者",epithet:"路漫漫其修远兮",text:"你输了那一战，却没输掉那颗心。\n\n真正的豪气，不是永不失败，而是失败之后，依然敢拔剑。"}
+};
+const G={name:"无名",gender:"男",school:"剑修",personality:"豪迈",hp:100,hpMax:100,mp:50,mpMax:50,atk:12,hao:10,fame:0,gold:20,wit:5,mode:"game",script:"haoxia",node:"start",flags:{},title:"初出茅庐",plays:0,endings:[],favs:[],coin:128};
+function save(){try{localStorage.setItem("haoxia_v2",JSON.stringify(G))}catch(e){}}
+function load(){try{const r=localStorage.getItem("haoxia_v2");if(r)Object.assign(G,JSON.parse(r))}catch(e){}}
+load();
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("show"),1800)}
+function go(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");const tabs=["s-home","s-scripts","s-create","s-me"];document.getElementById("tabbar").style.display=tabs.includes(id)?"flex":"none";document.getElementById("topbar").style.display=(id==="s-game")?"none":"flex";if(tabs.includes(id)){document.querySelectorAll(".tabbar button").forEach(b=>{b.classList.toggle("on",b.dataset.s===id)})}window.scrollTo(0,0)}
+function scriptCard(s){return `<div class="card" onclick="openDetail('${s.id}')"><div class="cover" style="background:${s.bg}">${s.char}</div><div class="meta"><h4>${s.title}</h4><div class="tags">${s.cats.map((c,i)=>`<span class="tag${i?' g':''}">${c}</span>`).join("")}</div><div class="desc">${s.intro}</div><div class="foot">▶ ${s.plays} · ★ ${s.rate}</div></div></div>`}
+function renderHome(cat="全部",q=""){const list=SCRIPTS.filter(s=>{const okCat=cat==="全部"||s.cats.includes(cat);const okQ=!q||s.title.includes(q)||s.intro.includes(q)||s.cats.some(c=>c.includes(q));return okCat&&okQ});document.getElementById("home-cards").innerHTML=list.slice(0,3).map(scriptCard).join("")||"<div style=\"padding:20px;text-align:center;color:var(--ink2)\">没有找到相关剧本</div>";document.getElementById("home-cards2").innerHTML=list.slice(3).map(scriptCard).join("")||list.slice(0,2).map(scriptCard).join("")}
+function renderScripts(cat="全部",q=""){const list=SCRIPTS.filter(s=>{const okCat=cat==="全部"||s.cats.includes(cat);const okQ=!q||s.title.includes(q)||s.intro.includes(q)||s.cats.some(c=>c.includes(q));return okCat&&okQ});document.getElementById("all-cards").innerHTML=list.map(scriptCard).join("")||"<div style=\"padding:20px;text-align:center;color:var(--ink2)\">没有找到相关剧本</div>";document.getElementById("script-count").textContent=`共 ${list.length} 部`}
+function bindChips(id,fn){const el=document.getElementById(id);el.addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;el.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));c.classList.add("on");fn(c.dataset.cat,document.getElementById("search-input").value.trim())})}
+bindChips("cat-chips",renderHome);bindChips("cat-chips2",renderScripts);
+document.getElementById("search-input").addEventListener("input",e=>{const q=e.target.value.trim();const cat=document.querySelector("#cat-chips .chip.on")?.dataset.cat||"全部";const cat2=document.querySelector("#cat-chips2 .chip.on")?.dataset.cat||"全部";renderHome(cat,q);renderScripts(cat2,q)});
+let currentScript=SCRIPTS[0];
+function openDetail(id){currentScript=SCRIPTS.find(s=>s.id===id)||SCRIPTS[0];document.getElementById("detail-title").textContent=currentScript.title;document.getElementById("detail-bgchar").textContent=currentScript.char;document.getElementById("detail-hero").style.background=currentScript.bg;document.getElementById("detail-tags").innerHTML=currentScript.cats.map(c=>`<span class="tag">${c}</span>`).join("");document.getElementById("detail-intro").textContent=currentScript.intro;document.getElementById("d-plays").textContent=currentScript.plays;document.getElementById("d-rate").textContent=currentScript.rate;document.getElementById("d-ch").textContent=currentScript.chapters;go("s-detail")}
+function startFromDetail(novel){if(novel){G.mode="novel";toast("已切换小说模式")}else G.mode="game";go("s-char")}
+function bindSeg(id,key){const el=document.getElementById(id);el.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;el.querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");G[key]=b.dataset.v})}
+bindSeg("seg-gender","gender");bindSeg("seg-school","school");bindSeg("seg-personality","personality");
+function beginAdventure(){const n=document.getElementById("char-name").value.trim();G.name=n||"无名大侠";G.hp=100;G.hpMax=100;G.mp=50;G.mpMax=50;G.atk=12;G.hao=10;G.fame=0;G.gold=20;G.wit=5;G.node="start";G.flags={};G.title="初出茅庐";G.plays++;if(G.school==="剑修")G.atk+=3;if(G.school==="刀客"){G.atk+=2;G.hp+=10;G.hpMax+=10}if(G.school==="拳师"){G.hp+=20;G.hpMax+=20;G.hao+=5}if(G.school==="暗器"){G.atk+=2;G.wit+=2}if(G.school==="内功"){G.mp+=30;G.mpMax+=30}if(G.personality==="豪迈")G.hao+=10;if(G.personality==="狂放")G.hao+=15;save();go("s-game");document.getElementById("story").innerHTML="";renderNode()}
+function updateGameHUD(){document.getElementById("g-name").innerHTML=`${G.name}<span id="g-title">${G.title}</span>`;document.getElementById("g-hp-t").textContent=`${G.hp}/${G.hpMax}`;document.getElementById("g-mp-t").textContent=`${G.mp}/${G.mpMax}`;document.getElementById("g-hao-t").textContent=G.hao;document.getElementById("g-hp").style.width=(G.hp/G.hpMax*100)+"%";document.getElementById("g-mp").style.width=(G.mp/G.mpMax*100)+"%";document.getElementById("g-hao").style.width=Math.min(100,G.hao)+"%";document.getElementById("g-mode").textContent=G.mode==="novel"?"小说模式":"游戏模式";document.getElementById("inputbar").style.display=G.mode==="novel"?"none":"flex"}
+function appendMsg(html,who="sys"){const st=document.getElementById("story");const d=document.createElement("div");d.className="msg"+(who==="me"?" me":"");d.innerHTML=`<div class="bubble">${html}</div>`;st.appendChild(d);st.scrollTop=st.scrollHeight}
+function renderChoices(choices){const q=document.getElementById("quick");q.innerHTML="";if(G.mode==="novel"||!choices||!choices.length)return;choices.forEach(c=>{const b=document.createElement("button");if(c.hao)b.className="hao";b.innerHTML=(c.hao?"◈ ":"")+c.t;b.onclick=()=>{let eff="";if(c.eff)eff=c.eff(G)||"";appendMsg(`<div class="d">你的选择</div><p>${c.t}</p>${eff?"<p>"+eff+"</p>":""}`,"me");G.node=c.next;updateGameHUD();save();q.innerHTML="";setTimeout(()=>renderNode(),280)};q.appendChild(b)})}
+function renderNode(){updateGameHUD();const node=STORY_WUXIA[G.node];if(G.node.startsWith("ending_")){const e=ENDINGS[G.node]||ENDINGS.ending_free;G.title=e.title;if(!G.endings.includes(G.node))G.endings.push(G.node);save();appendMsg(`<div class="d">终章 · ${e.title}</div><p style="text-align:center;font-family:var(--kai);font-size:18px;letter-spacing:.2em;color:var(--red)">「${e.epithet}」</p>${e.text.split("\n").map(p=>p?`<p>${p}</p>`:"").join("")}<p class="sys">结局已解锁</p>`);document.getElementById("quick").innerHTML="";const q=document.getElementById("quick");const b1=document.createElement("button");b1.textContent="再闯江湖";b1.onclick=()=>{go("s-char")};const b2=document.createElement("button");b2.className="hao";b2.textContent="回到首页";b2.onclick=()=>{go("s-home")};q.appendChild(b1);q.appendChild(b2);return}if(!node){appendMsg("<p>江湖路尽，后会有期。</p>");return}const text=typeof node.text==="function"?node.text(G):node.text;appendMsg(text);if(node.combat){const q=document.getElementById("quick");q.innerHTML="";const b=document.createElement("button");b.className="hao";b.textContent="⚔ 拔剑应战！";b.onclick=async()=>{b.disabled=true;b.textContent="交战中……";const result=await runCombat(node.combat);const after=result.win?node.onWin:node.onLose;if(after){const at=typeof after.text==="function"?after.text(G):after.text;appendMsg(at+(result.win?`<p class="sys">战斗胜利 · 气血剩余 ${G.hp}</p>`:`<p class="sys">战斗失利 · 气血剩余 ${G.hp}</p>`));renderChoices(after.choices||[])}save()};q.appendChild(b);return}renderChoices(node.choices||[])}
+async function runCombat(enemy){const log=[];log.push(`【对决】${G.name} VS ${enemy.name}`);let eHp=enemy.hp,myHp=G.hp,win=false;for(let r=1;r<=12&&myHp>0&&eHp>0;r++){const crit=Math.random()<0.12;let dmg=Math.max(1,G.atk+Math.floor(Math.random()*6)-(enemy.def||2));if(crit)dmg=Math.floor(dmg*1.7);if(G.hao>40&&Math.random()<0.15){dmg+=5;log.push("豪气迸发！")}eHp-=dmg;log.push(crit?`第${r}回合 · <b>重击！</b>你造成 ${dmg} 伤害`:`第${r}回合 · 你出招命中，对方受 ${dmg} 伤`);if(eHp<=0){log.push("<b>—— 胜 ——</b>");win=true;break}const eCrit=Math.random()<0.08;let eDmg=Math.max(1,enemy.atk+Math.floor(Math.random()*5)-2);if(eCrit)eDmg=Math.floor(eDmg*1.5);if(Math.random()<0.12){log.push("对方虚晃一枪，被你闪开")}else{myHp-=eDmg;log.push(eCrit?`对方暴起发难，你受 ${eDmg} 伤`:`对方还击，你受 ${eDmg} 伤`)}}if(!win)log.push("<b>—— 力竭 ——</b>");G.hp=Math.max(0,myHp);for(const line of log){appendMsg(`<p style="font-family:var(--mono);font-size:12px;color:#6B5C48">${line}</p>`);await new Promise(r=>setTimeout(r,120))}return{win}}
+function submitFree(){const inp=document.getElementById("free-input");const v=inp.value.trim();if(!v){toast("请输入行动");return}inp.value="";appendMsg(`<div class="d">你的行动</div><p>${v}</p>`,"me");setTimeout(()=>{if(/打|杀|战|冲|上|干|揍|斗/.test(v)){appendMsg(`<div class="d">江湖风云</div><p>你二话不说，拔剑便上！</p><p class="sys">豪气 +3</p>`);G.hao+=3;renderChoices([{t:"正面硬刚",d:"狭路相逢勇者胜",hao:1,eff:s=>{s.hao+=5;s.hp-=8;return"硬碰硬！<span class='sys'>豪气+5·气血-8</span>"},next:"temple"},{t:"以巧破力",d:"四两拨千斤",eff:s=>{s.wit+=2;return"巧妙化解。<span class='sys'>悟性+2</span>"},next:"temple"}])}else if(/喝|酒|吃|休息|睡/.test(v)){appendMsg(`<div class="d">江湖闲情</div><p>你大碗喝酒，大口吃肉。</p><p class="sys">气血 +10</p>`);G.hp=Math.min(G.hpMax,G.hp+10);renderChoices(STORY_WUXIA[G.node]?.choices||STORY_WUXIA.start.choices)}else if(/走|去|前往|出发|赶路/.test(v)){appendMsg(`<div class="d">赶路</div><p>你收拾行囊，继续赶路。</p>`);renderChoices(STORY_WUXIA[G.node]?.choices||STORY_WUXIA.start.choices)}else if(/问|说|聊|谈|交/.test(v)){appendMsg(`<div class="d">交涉</div><p>江湖中，多一个朋友总比多一个敌人好。</p><p class="sys">声望 +2</p>`);G.fame+=2;renderChoices(STORY_WUXIA[G.node]?.choices||STORY_WUXIA.start.choices)}else{const flavor=["你沉吟片刻，心中已有计较。","江湖风雨，且走且看。","你这一举动，暗合天机。","远处传来马蹄声，似乎有事要发生。","你摸了摸腰间的剑，继续前行。"];appendMsg(`<div class="d">江湖</div><p>${flavor[Math.floor(Math.random()*flavor.length)]}</p><p class="sys">悟性 +1</p>`);G.wit+=1;renderChoices(STORY_WUXIA[G.node]?.choices||STORY_WUXIA.start.choices)}updateGameHUD();save()},400)}
+document.getElementById("free-input").addEventListener("keydown",e=>{if(e.key==="Enter")submitFree()});
+function toggleMode(){G.mode=G.mode==="novel"?"game":"novel";toast(G.mode==="novel"?"已切换小说模式":"已切换游戏模式");updateGameHUD();save()}
+function updateMe(){document.getElementById("me-name").textContent=G.name==="无名"?"游客侠士":G.name;document.getElementById("me-av").textContent=(G.name||"侠")[0];document.getElementById("me-plays").textContent=G.plays||0;document.getElementById("me-endings").textContent=(G.endings||[]).length;document.getElementById("me-coin").textContent=G.coin||128;document.getElementById("me-fav").textContent=(G.favs||[]).length+" 部 ›";document.getElementById("coin-val").textContent=G.coin||128}
+document.getElementById("tabbar").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const id=b.dataset.s;go(id);if(id==="s-home")renderHome();if(id==="s-scripts")renderScripts();if(id==="s-me")updateMe()});
+renderHome();renderScripts();updateMe();document.getElementById("tabbar").style.display="flex";
+</script>
+</body>
+</html>
